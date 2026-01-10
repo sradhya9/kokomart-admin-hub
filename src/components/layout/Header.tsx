@@ -56,7 +56,7 @@ export function Header({ title, subtitle, onRefresh }: HeaderProps) {
         {/* Profile */}
         <div className="flex items-center gap-3 rounded-lg bg-secondary/50 px-3 py-1.5">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/placeholder.svg" alt="Admin" />
+            <AvatarImage src="/logo.png" alt="Admin" />
             <AvatarFallback className="bg-primary text-primary-foreground text-sm">
               AD
             </AvatarFallback>

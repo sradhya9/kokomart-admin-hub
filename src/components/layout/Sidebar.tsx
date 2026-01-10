@@ -28,8 +28,8 @@ export function Sidebar() {
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary">
-            <span className="text-xl font-bold text-primary-foreground">K</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white overflow-hidden">
+            <img src="/logo.png" alt="Logo" className="h-full w-full object-contain" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-sidebar-foreground">KoKoMart</h1>
