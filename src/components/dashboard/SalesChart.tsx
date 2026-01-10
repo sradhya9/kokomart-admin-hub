@@ -10,17 +10,11 @@ import {
   AreaChart,
 } from "recharts";
 
-const data = [
-  { name: "Mon", sales: 12500 },
-  { name: "Tue", sales: 18200 },
-  { name: "Wed", sales: 15800 },
-  { name: "Thu", sales: 22400 },
-  { name: "Fri", sales: 28100 },
-  { name: "Sat", sales: 35600 },
-  { name: "Sun", sales: 31200 },
-];
+interface SalesChartProps {
+  data: { name: string; sales: number }[];
+}
 
-export function SalesChart() {
+export function SalesChart({ data = [] }: SalesChartProps) {
   return (
     <div className="chart-container animate-fade-in">
       <div className="mb-6">

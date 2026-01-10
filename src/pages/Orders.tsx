@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import { Search, Eye, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, doc, updateDoc, getDocs, query, where } from "firebase/firestore";
 
 interface OrderItem {
   name: string;
@@ -42,91 +44,7 @@ interface Order {
 
 const statusFlow = ["RECEIVED", "CUTTING", "PACKING", "OUT_FOR_DELIVERY", "DELIVERED"];
 
-const initialOrders: Order[] = [
-  {
-    id: "ORD-001",
-    customer: "Rahul Kumar",
-    phone: "+91 98765 43210",
-    items: [
-      { name: "Whole Chicken", quantity: 2, price: 360 },
-      { name: "Chicken Breast", quantity: 1, price: 320 },
-    ],
-    subtotal: 1040,
-    discount: 104,
-    walletUsed: 50,
-    finalAmount: 886,
-    paymentMethod: "UPI",
-    status: "DELIVERED",
-    address: "123 Main St, Bangalore - 560001",
-    createdAt: "2024-01-10 08:30 AM",
-  },
-  {
-    id: "ORD-002",
-    customer: "Priya Singh",
-    phone: "+91 87654 32109",
-    items: [
-      { name: "Chicken Wings", quantity: 2, price: 560 },
-      { name: "Chicken Drumstick", quantity: 1, price: 220 },
-    ],
-    subtotal: 780,
-    discount: 0,
-    walletUsed: 0,
-    finalAmount: 780,
-    paymentMethod: "COD",
-    status: "OUT_FOR_DELIVERY",
-    address: "456 Park Ave, Bangalore - 560002",
-    createdAt: "2024-01-10 09:15 AM",
-  },
-  {
-    id: "ORD-003",
-    customer: "Amit Patel",
-    phone: "+91 76543 21098",
-    items: [
-      { name: "Country Chicken", quantity: 1, price: 450 },
-    ],
-    subtotal: 450,
-    discount: 45,
-    walletUsed: 25,
-    finalAmount: 380,
-    paymentMethod: "Card",
-    status: "PACKING",
-    address: "789 Lake View, Bangalore - 560003",
-    createdAt: "2024-01-10 10:00 AM",
-  },
-  {
-    id: "ORD-004",
-    customer: "Sneha Gupta",
-    phone: "+91 65432 10987",
-    items: [
-      { name: "Whole Chicken", quantity: 3, price: 540 },
-    ],
-    subtotal: 540,
-    discount: 0,
-    walletUsed: 0,
-    finalAmount: 540,
-    paymentMethod: "UPI",
-    status: "CUTTING",
-    address: "321 Hill Road, Bangalore - 560004",
-    createdAt: "2024-01-10 10:30 AM",
-  },
-  {
-    id: "ORD-005",
-    customer: "Vikram Sharma",
-    phone: "+91 54321 09876",
-    items: [
-      { name: "Chicken Breast", quantity: 2, price: 640 },
-      { name: "Chicken Wings", quantity: 1, price: 280 },
-    ],
-    subtotal: 920,
-    discount: 92,
-    walletUsed: 30,
-    finalAmount: 798,
-    paymentMethod: "UPI",
-    status: "RECEIVED",
-    address: "654 Garden St, Bangalore - 560005",
-    createdAt: "2024-01-10 11:00 AM",
-  },
-];
+// Initial orders removed, fetching from Firebase
 
 const statusStyles: Record<string, string> = {
   RECEIVED: "status-received",
@@ -145,10 +63,69 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Orders() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "orders"), (snapshot) => {
+      const processOrders = async () => {
+        const fetchedOrders = await Promise.all(snapshot.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+
+          // Fetch user data
+          let customer = "Unknown";
+          let phone = "";
+          let address = "";
+
+          if (data.user_id) {
+            try {
+              const userQuery = query(collection(db, "users"), where("id", "==", data.user_id));
+              const userSnap = await getDocs(userQuery);
+              if (!userSnap.empty) {
+                const userData = userSnap.docs[0].data();
+                customer = userData.name || "Unknown";
+                phone = userData.phone || "";
+                address = userData.address || "";
+              }
+            } catch (e) { console.error(e); }
+          }
+
+          // Map items
+          const items = (data.items || []).map((item: any) => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          }));
+
+          const status = (data.status || "RECEIVED").toUpperCase();
+
+          return {
+            id: docSnap.id,
+            customer,
+            phone,
+            items,
+            subtotal: data.total_amount || 0,
+            discount: data.discount || 0,
+            walletUsed: data.wallet_used || 0,
+            finalAmount: data.final_amount || 0,
+            paymentMethod: "Online", // Defaulting as not present
+            status,
+            address,
+            createdAt: new Date(data.created_at).toLocaleString()
+          } as Order;
+        }));
+
+        // Sort by date desc (if not querying with orderBy)
+        fetchedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        setOrders(fetchedOrders);
+      };
+      processOrders();
+    });
+    return () => unsub();
+  }, []);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -158,15 +135,21 @@ export default function Orders() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleStatusUpdate = (orderId: string) => {
-    setOrders(orders.map((order) => {
-      if (order.id === orderId && order.status !== "DELIVERED") {
-        const currentIndex = statusFlow.indexOf(order.status);
-        const nextStatus = statusFlow[currentIndex + 1];
-        return { ...order, status: nextStatus };
+  const handleStatusUpdate = async (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (order && order.status !== "DELIVERED") {
+      const currentIndex = statusFlow.indexOf(order.status);
+      const nextStatus = statusFlow[currentIndex + 1];
+
+      try {
+        await updateDoc(doc(db, "orders", orderId), {
+          status: nextStatus.toLowerCase() // Store lowercase in DB? Prompt had lowercase "pending".
+        });
+        // UI update will happen via snapshot
+      } catch (e) {
+        console.error("Error updating status:", e);
       }
-      return order;
-    }));
+    }
   };
 
   const getNextStatus = (currentStatus: string) => {

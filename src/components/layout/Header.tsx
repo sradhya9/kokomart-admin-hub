@@ -41,7 +41,7 @@ export function Header({ title, subtitle, onRefresh }: HeaderProps) {
           </Button>
         )}
 
-        {/* Notifications */}
+        {/* Notifications 
         <Button
           variant="ghost"
           size="icon"
@@ -51,7 +51,7 @@ export function Header({ title, subtitle, onRefresh }: HeaderProps) {
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
             3
           </span>
-        </Button>
+        </Button>*/}
 
         {/* Profile */}
         <div className="flex items-center gap-3 rounded-lg bg-secondary/50 px-3 py-1.5">

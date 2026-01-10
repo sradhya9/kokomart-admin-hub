@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Search, Eye, Plus, Minus, Wallet } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, doc, updateDoc, Timestamp } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 
 interface User {
@@ -23,61 +25,10 @@ interface User {
   joinedAt: string;
 }
 
-const initialUsers: User[] = [
-  {
-    id: "1",
-    name: "Rahul Kumar",
-    phone: "+91 98765 43210",
-    email: "rahul@email.com",
-    walletPoints: 125,
-    totalOrders: 15,
-    firstOrderCompleted: true,
-    joinedAt: "2023-08-15",
-  },
-  {
-    id: "2",
-    name: "Priya Singh",
-    phone: "+91 87654 32109",
-    email: "priya@email.com",
-    walletPoints: 80,
-    totalOrders: 8,
-    firstOrderCompleted: true,
-    joinedAt: "2023-10-20",
-  },
-  {
-    id: "3",
-    name: "Amit Patel",
-    phone: "+91 76543 21098",
-    email: "amit@email.com",
-    walletPoints: 45,
-    totalOrders: 5,
-    firstOrderCompleted: true,
-    joinedAt: "2023-11-05",
-  },
-  {
-    id: "4",
-    name: "Sneha Gupta",
-    phone: "+91 65432 10987",
-    email: "sneha@email.com",
-    walletPoints: 0,
-    totalOrders: 0,
-    firstOrderCompleted: false,
-    joinedAt: "2024-01-08",
-  },
-  {
-    id: "5",
-    name: "Vikram Sharma",
-    phone: "+91 54321 09876",
-    email: "vikram@email.com",
-    walletPoints: 200,
-    totalOrders: 22,
-    firstOrderCompleted: true,
-    joinedAt: "2023-06-12",
-  },
-];
+// Initial users removed, fetching from Firebase
 
 export default function Users() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [walletAdjustment, setWalletAdjustment] = useState<{ userId: string; amount: number } | null>(null);
@@ -90,13 +41,74 @@ export default function Users() {
     );
   });
 
-  const handleWalletAdjust = (userId: string, amount: number) => {
-    setUsers(users.map((user) => {
-      if (user.id === userId) {
-        return { ...user, walletPoints: Math.max(0, user.walletPoints + amount) };
-      }
-      return user;
-    }));
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "users"), (snapshot) => {
+      const fetchedUsers = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        // Convert timestamp to date string
+        let joined = "Unknown";
+        if (data.created_at) {
+          joined = new Date(data.created_at).toLocaleDateString();
+        }
+
+        return {
+          id: doc.id, // Use doc ID, usually same as auth UID
+          name: data.name || "Unknown",
+          phone: data.phone || "",
+          email: data.email || "",
+          walletPoints: data.wallet_points || 0,
+          totalOrders: 0, // Placeholder, need separate aggregation
+          firstOrderCompleted: data.is_first_order_completed || false,
+          joinedAt: joined,
+        } as User;
+      });
+      setUsers(fetchedUsers);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleWalletAdjust = async (userId: string, amount: number) => {
+    const userToUpdate = users.find(u => u.id === userId);
+    if (!userToUpdate) return;
+
+    // Optimistic update (optional, but good for UI)
+    // Actually, real-time listener will handle UI update.
+
+    try {
+      // We need to find the doc reference. Assuming userId IS the doc ID.
+      // The prompt says "id": "VYb4...". 
+      // Typically in Firestore the doc ID is the UID.
+      // I'll assume userId in my User interface IS the doc ID.
+
+      // Wait, I mapped `id: doc.id` above. So yes.
+      // But in the prompt the user doc has an `id` field which is the UID.
+      // It's likely the doc ID is also the UID.
+
+      // Calculate new balance
+      const currentPoints = userToUpdate.walletPoints;
+      const newPoints = Math.max(0, currentPoints + amount); // Logic from original code was + amount (amount could be negative?)
+      // The original code was: walletPoints: Math.max(0, user.walletPoints + amount)
+      // WalletAdjustment dialog allows +10 and -10. But amount passed is the DELTA?
+      // No, wait.
+      // In original code:
+      // onChange={(e) => setWalletAdjustment({ ...walletAdjustment, amount: Number(e.target.value) })}
+      // And `handleWalletAdjust(walletAdjustment.userId, walletAdjustment.amount)`
+      // `walletPoints: Math.max(0, user.walletPoints + amount)`
+      // This implies `amount` is the VALUE TO ADD/SUBTRACT?
+      // Let's check the Dialog again. 
+      // The input value is walletAdjustment.amount.
+      // The buttons do +10 / -10 to that amount.
+      // So `amount` is the delta to apply.
+
+      const docRef = doc(db, "users", userId);
+      await updateDoc(docRef, {
+        wallet_points: Math.max(0, currentPoints + amount)
+      });
+
+    } catch (e) {
+      console.error("Error updating wallet:", e);
+      // Toast error?
+    }
     setWalletAdjustment(null);
   };
 

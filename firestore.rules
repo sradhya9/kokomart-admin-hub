@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Admin Helper: For this dashboard, we treat any authenticated user (including anonymous) as admin.
+    // CAUTION: In a production app with public sign-up, you would check request.auth.uid == "SPECIFIC_ADMIN_ID"
+    function isAdmin() {
+      return isAuthenticated();
+    }
+    
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Products:
+    // - Everyone can read
+    // - Admins can read/write (create, update, delete)
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Users:
+    // - Users can read and write their own profile
+    // - Admins can read all users and update wallets
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+    
+    // Orders:
+    // - Users can create orders
+    // - Users can read their own orders
+    // - Users can cancel their own orders (update status)
+    // - Admins can read all orders and update status
+    match /orders/{orderId} {
+      allow create: if isAuthenticated();
+      allow read, update: if (isAuthenticated() && resource.data.user_id == request.auth.uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

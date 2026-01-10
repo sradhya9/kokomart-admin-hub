@@ -8,15 +8,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const data = [
-  { name: "Whole Chicken", sales: 45200, fill: "hsl(38 92% 50%)" },
-  { name: "Breast", sales: 32100, fill: "hsl(142 76% 36%)" },
-  { name: "Drumstick", sales: 28400, fill: "hsl(199 89% 48%)" },
-  { name: "Wings", sales: 18900, fill: "hsl(280 65% 60%)" },
-  { name: "Thigh", sales: 15600, fill: "hsl(340 75% 55%)" },
-];
+interface ProductSalesChartProps {
+  data: { name: string; sales: number; fill?: string }[];
+}
 
-export function ProductSalesChart() {
+export function ProductSalesChart({ data = [] }: ProductSalesChartProps) {
   return (
     <div className="chart-container animate-fade-in">
       <div className="mb-6">

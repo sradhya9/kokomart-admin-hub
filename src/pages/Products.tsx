@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, TrendingUp, TrendingDown, Minus, Search } from "lucide-react";
+import { Plus, Pencil, TrendingUp, TrendingDown, Minus, Search, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
 
 interface Product {
   id: string;
@@ -35,71 +37,10 @@ interface Product {
   image: string;
 }
 
-const initialProducts: Product[] = [
-  {
-    id: "1",
-    name: "Whole Chicken",
-    category: "Whole Chicken",
-    currentPrice: 180,
-    previousPrice: 165,
-    priceChangeDirection: "UP",
-    priceChangePercentage: 9.1,
-    availability: true,
-    updatedAt: "2024-01-10 10:30 AM",
-    image: "🐔",
-  },
-  {
-    id: "2",
-    name: "Chicken Breast",
-    category: "Whole Meat",
-    currentPrice: 320,
-    previousPrice: 340,
-    priceChangeDirection: "DOWN",
-    priceChangePercentage: 5.9,
-    availability: true,
-    updatedAt: "2024-01-10 09:15 AM",
-    image: "🍗",
-  },
-  {
-    id: "3",
-    name: "Chicken Drumstick",
-    category: "Whole Meat",
-    currentPrice: 220,
-    previousPrice: 220,
-    priceChangeDirection: "SAME",
-    priceChangePercentage: 0,
-    availability: true,
-    updatedAt: "2024-01-09 04:45 PM",
-    image: "🍗",
-  },
-  {
-    id: "4",
-    name: "Chicken Wings",
-    category: "Whole Meat",
-    currentPrice: 280,
-    previousPrice: 260,
-    priceChangeDirection: "UP",
-    priceChangePercentage: 7.7,
-    availability: false,
-    updatedAt: "2024-01-10 08:00 AM",
-    image: "🍗",
-  },
-  {
-    id: "5",
-    name: "Country Chicken",
-    category: "Farm Chicken",
-    currentPrice: 450,
-    previousPrice: 480,
-    priceChangeDirection: "DOWN",
-    priceChangePercentage: 6.3,
-    availability: true,
-    updatedAt: "2024-01-10 11:00 AM",
-    image: "🐓",
-  },
-];
+// Initial products removed, fetching from Firebase
 
 export default function Products() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -111,7 +52,36 @@ export default function Products() {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = [...new Set(products.map((p) => p.category))];
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "products"), (snapshot) => {
+      const fetchedProducts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name,
+          category: data.category,
+          currentPrice: data.current_price,
+          previousPrice: data.previous_price,
+          priceChangeDirection: (data.price_direction || "SAME").toUpperCase(),
+          priceChangePercentage: data.price_change_percentage,
+          availability: data.availability,
+          updatedAt: "N/A", // Timestamp not in sample, defaulting
+          image: data.image
+        } as Product;
+      });
+      setProducts(fetchedProducts);
+    });
+    return () => unsub();
+  }, []);
+
+  // Compute categories from fetched products if possible, or keep static list?
+  // Original code: const categories = [...new Set(products.map((p) => p.category))];
+  // Fetching might take time, so categories might be empty initially.
+  // We can default common categories or wait.
+  // The original one derived from products which is fine.
+  const categories = products.length > 0
+    ? [...new Set(products.map((p) => p.category))]
+    : ["Standard", "Whole Meat", "Farm Chicken"]; // Fallbacks
 
   const getPriceIcon = (direction: string) => {
     switch (direction) {
@@ -129,48 +99,62 @@ export default function Products() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = (formData: FormData) => {
+  const handleSave = async (formData: FormData) => {
     const newPrice = Number(formData.get("price"));
     const name = formData.get("name") as string;
     const category = formData.get("category") as string;
     const availability = formData.get("availability") === "on";
 
-    if (editingProduct) {
-      setProducts(products.map((p) => {
-        if (p.id === editingProduct.id) {
-          const priceChange = newPrice - p.currentPrice;
-          const priceChangePercentage = (Math.abs(priceChange) / p.currentPrice) * 100;
-          return {
-            ...p,
-            name,
-            category,
-            previousPrice: p.currentPrice,
-            currentPrice: newPrice,
-            priceChangeDirection: priceChange > 0 ? "UP" : priceChange < 0 ? "DOWN" : "SAME",
-            priceChangePercentage: Number(priceChangePercentage.toFixed(1)),
-            availability,
-            updatedAt: new Date().toLocaleString(),
-          };
-        }
-        return p;
-      }));
-    } else {
-      const newProduct: Product = {
-        id: Date.now().toString(),
-        name,
-        category,
-        currentPrice: newPrice,
-        previousPrice: newPrice,
-        priceChangeDirection: "SAME",
-        priceChangePercentage: 0,
-        availability,
-        updatedAt: new Date().toLocaleString(),
-        image: "🐔",
-      };
-      setProducts([...products, newProduct]);
+    try {
+      if (editingProduct) {
+        // Calculate change logic
+        const currentPrice = editingProduct.currentPrice;
+        // If fetching from DB, previousPrice logic is simpler if we trust DB state.
+        // But here we are updating with new value.
+
+        const priceChange = newPrice - currentPrice;
+        const percentage = (Math.abs(priceChange) / currentPrice) * 100;
+        const direction = priceChange > 0 ? "up" : priceChange < 0 ? "down" : "same";
+
+        await updateDoc(doc(db, "products", editingProduct.id), {
+          name,
+          category,
+          current_price: newPrice,
+          previous_price: currentPrice, // Update previous to what was current
+          price_direction: direction,
+          price_change_percentage: Number(percentage.toFixed(2)),
+          availability,
+          image: (formData.get("image") as string) || editingProduct.image
+        });
+
+      } else {
+        await addDoc(collection(db, "products"), {
+          name,
+          category,
+          current_price: newPrice,
+          previous_price: newPrice,
+          price_direction: "same",
+          price_change_percentage: 0,
+          availability,
+          image: (formData.get("image") as string) || "https://placehold.co/600x400?text=Product",
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (e) {
+      console.error("Error saving product:", e);
     }
     setIsDialogOpen(false);
     setEditingProduct(null);
+  };
+
+  const handleDelete = async (productId: string) => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteDoc(doc(db, "products", productId));
+      } catch (e) {
+        console.error("Error deleting product:", e);
+      }
+    }
   };
 
   return (
@@ -257,6 +241,15 @@ export default function Products() {
                 />
                 <Label htmlFor="availability">In Stock</Label>
               </div>
+              <div>
+                <Label htmlFor="image">Image URL</Label>
+                <Input
+                  id="image"
+                  name="image"
+                  placeholder="https://example.com/image.jpg"
+                  defaultValue={editingProduct?.image || ""}
+                />
+              </div>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
@@ -288,7 +281,11 @@ export default function Products() {
               <tr key={product.id} className="animate-fade-in">
                 <td>
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{product.image}</span>
+                    {product.image && product.image.startsWith("http") ? (
+                      <img src={product.image} alt={product.name} className="h-10 w-10 rounded-md object-cover" />
+                    ) : (
+                      <span className="text-2xl">{product.image}</span>
+                    )}
                     <span className="font-medium">{product.name}</span>
                   </div>
                 </td>
@@ -324,9 +321,14 @@ export default function Products() {
                 </td>
                 <td className="text-sm text-muted-foreground">{product.updatedAt}</td>
                 <td>
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(product)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(product)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(product.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}

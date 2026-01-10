@@ -4,10 +4,8 @@ import {
   Package,
   ShoppingCart,
   Users,
-  Wallet,
   Percent,
   BarChart3,
-  Settings,
   LogOut,
   ChevronRight,
 } from "lucide-react";
@@ -18,10 +16,8 @@ const menuItems = [
   { icon: Package, label: "Products & Pricing", path: "/products" },
   { icon: ShoppingCart, label: "Orders", path: "/orders" },
   { icon: Users, label: "Users", path: "/users" },
-  { icon: Wallet, label: "Wallet & Points", path: "/wallet" },
-  { icon: Percent, label: "Discounts & Offers", path: "/discounts" },
+  /*{ icon: Percent, label: "Discounts & Offers", path: "/discounts" },*/
   { icon: BarChart3, label: "Reports", path: "/reports" },
-  { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
 export function Sidebar() {

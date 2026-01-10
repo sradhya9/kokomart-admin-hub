@@ -7,13 +7,11 @@ import {
   Tooltip,
 } from "recharts";
 
-const data = [
-  { name: "Points Issued", value: 12450, color: "hsl(38 92% 50%)" },
-  { name: "Points Redeemed", value: 8320, color: "hsl(142 76% 36%)" },
-  { name: "Points Pending", value: 4130, color: "hsl(220 14% 80%)" },
-];
+interface WalletChartProps {
+  data: { name: string; value: number; color: string }[];
+}
 
-export function WalletChart() {
+export function WalletChart({ data = [] }: WalletChartProps) {
   return (
     <div className="chart-container animate-fade-in">
       <div className="mb-6">
