@@ -7,13 +7,12 @@ import { getFirestore } from 'firebase/firestore';
 
 // Configuration from user request
 const firebaseConfig = {
-    apiKey: "AIzaSyChD7SyoC3ESkNfiPK3yXYOAekCVnZHkCs",
-    authDomain: "kokomart-e1f08.firebaseapp.com",
-    projectId: "kokomart-e1f08",
-    storageBucket: "kokomart-e1f08.firebasestorage.app",
-    messagingSenderId: "692286395880",
-    appId: "1:692286395880:web:0e9d51c09b63ed2864005d",
-    measurementId: "G-BDQMLF350X"
+    apiKey: "AIzaSyCtqSTywhBqxfYQx7MmqMlGiSv-On3MGBk",
+    authDomain: "meatup-f8c49.firebaseapp.com",
+    projectId: "meatup-f8c49",
+    storageBucket: "meatup-f8c49.firebasestorage.app",
+    messagingSenderId: "270170795022",
+    appId: "1:270170795022:web:09f1eb597a81c69f22205f"
 };
 
 // Initialize Firebase

@@ -25,6 +25,7 @@ interface OrderItem {
   name: string;
   quantity: number;
   price: number;
+  cuttingType?: string;
 }
 
 interface Order {
@@ -43,6 +44,8 @@ interface Order {
 }
 
 const statusFlow = ["RECEIVED", "CUTTING", "PACKING", "OUT_FOR_DELIVERY", "DELIVERED"];
+// Additional statuses that are not part of normal flow but should be filterable/displayed
+const extraStatuses = ["CANCELLED"];
 
 // Initial orders removed, fetching from Firebase
 
@@ -52,6 +55,7 @@ const statusStyles: Record<string, string> = {
   PACKING: "status-packing",
   OUT_FOR_DELIVERY: "status-out-for-delivery",
   DELIVERED: "status-delivered",
+  CANCELLED: "status-cancelled",
 };
 
 const statusLabels: Record<string, string> = {
@@ -60,6 +64,7 @@ const statusLabels: Record<string, string> = {
   PACKING: "Packing",
   OUT_FOR_DELIVERY: "Out for Delivery",
   DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
 };
 
 export default function Orders() {
@@ -67,6 +72,8 @@ export default function Orders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  // statuses available for filtering (include extras like CANCELLED)
+  const statusesForFilter = ["all", ...statusFlow, ...extraStatuses];
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "orders"), (snapshot) => {
@@ -96,7 +103,8 @@ export default function Orders() {
           const items = (data.items || []).map((item: any) => ({
             name: item.name,
             quantity: item.quantity,
-            price: item.price
+            price: item.price,
+            cuttingType: item.cuttingType
           }));
 
           const status = (data.status || "RECEIVED").toUpperCase();
@@ -137,7 +145,7 @@ export default function Orders() {
 
   const handleStatusUpdate = async (orderId: string) => {
     const order = orders.find(o => o.id === orderId);
-    if (order && order.status !== "DELIVERED") {
+    if (order && order.status !== "DELIVERED" && order.status !== "CANCELLED") {
       const currentIndex = statusFlow.indexOf(order.status);
       const nextStatus = statusFlow[currentIndex + 1];
 
@@ -154,6 +162,7 @@ export default function Orders() {
 
   const getNextStatus = (currentStatus: string) => {
     const currentIndex = statusFlow.indexOf(currentStatus);
+    if (currentIndex === -1) return null;
     return currentIndex < statusFlow.length - 1 ? statusFlow[currentIndex + 1] : null;
   };
 
@@ -177,7 +186,7 @@ export default function Orders() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              {statusFlow.map((status) => (
+              {statusesForFilter.filter(s => s !== 'all').map((status) => (
                 <SelectItem key={status} value={status}>{statusLabels[status]}</SelectItem>
               ))}
             </SelectContent>
@@ -228,7 +237,7 @@ export default function Orders() {
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    {order.status !== "DELIVERED" && (
+                    {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -249,12 +258,19 @@ export default function Orders() {
 
       {/* Order Detail Dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Order Details - {selectedOrder?.id}</DialogTitle>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-6">
+              {/* Cancelled banner */}
+              {selectedOrder.status === "CANCELLED" && (
+                <div className="rounded-lg bg-destructive/10 text-destructive p-4">
+                  <strong>Order Cancelled</strong>
+                  <div className="text-sm text-muted-foreground">This order has been cancelled and will not be processed.</div>
+                </div>
+              )}
               {/* Customer Info */}
               <div className="rounded-lg bg-secondary/50 p-4">
                 <h4 className="font-semibold mb-2">Customer Information</h4>
@@ -272,6 +288,11 @@ export default function Orders() {
                       <div>
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                        {item.cuttingType && (
+                          <p className="text-xs bg-blue-100 text-blue-800 w-fit px-2 py-1 rounded mt-1">
+                            Cutting: {item.cuttingType}
+                          </p>
+                        )}
                       </div>
                       <p className="font-semibold">₹{item.price}</p>
                     </div>

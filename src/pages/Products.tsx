@@ -19,7 +19,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, TrendingUp, TrendingDown, Minus, Search, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Pencil, TrendingUp, TrendingDown, Minus, Search, Trash2, Eye } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
@@ -35,7 +38,21 @@ interface Product {
   availability: boolean;
   updatedAt: string;
   image: string;
+  description?: string;
+  cuttingTypes?: string[];
 }
+
+// Cutting types options
+const CUTTING_TYPES = [
+  "Curry Cut (Small)",
+  "Curry Cut (Medium)",
+  "Biriyani Cut (Medium)",
+  "Biriyani Cut (Large)",
+  "Boneless",
+  "With Bone",
+  "Breast",
+  "Whole Chicken"
+];
 
 // Initial products removed, fetching from Firebase
 
@@ -45,6 +62,8 @@ export default function Products() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -66,7 +85,9 @@ export default function Products() {
           priceChangePercentage: data.price_change_percentage,
           availability: data.availability,
           updatedAt: "N/A", // Timestamp not in sample, defaulting
-          image: data.image
+          image: data.image,
+          description: data.description || "",
+          cuttingTypes: Array.isArray(data.cutting_types) ? data.cutting_types : []
         } as Product;
       });
       setProducts(fetchedProducts);
@@ -99,11 +120,18 @@ export default function Products() {
     setIsDialogOpen(true);
   };
 
+  const handleViewDetails = (product: Product) => {
+    setViewingProduct(product);
+    setIsViewDetailsOpen(true);
+  };
+
   const handleSave = async (formData: FormData) => {
     const newPrice = Number(formData.get("price"));
     const name = formData.get("name") as string;
     const category = formData.get("category") as string;
     const availability = formData.get("availability") === "on";
+    const description = formData.get("description") as string;
+    const cuttingTypes = formData.getAll("cuttingTypes") as string[];
 
     try {
       if (editingProduct) {
@@ -124,7 +152,9 @@ export default function Products() {
           price_direction: direction,
           price_change_percentage: Number(percentage.toFixed(2)),
           availability,
-          image: (formData.get("image") as string) || editingProduct.image
+          image: (formData.get("image") as string) || editingProduct.image,
+          description,
+          cutting_types: cuttingTypes
         });
 
       } else {
@@ -137,6 +167,8 @@ export default function Products() {
           price_change_percentage: 0,
           availability,
           image: (formData.get("image") as string) || "https://placehold.co/600x400?text=Product",
+          description,
+          cutting_types: cuttingTypes,
           created_at: new Date().toISOString()
         });
       }
@@ -190,16 +222,17 @@ export default function Products() {
               Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
+          <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+            <DialogHeader className="sticky top-0 bg-background z-10">
               <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
             </DialogHeader>
             <form
+              id="product-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSave(new FormData(e.currentTarget));
               }}
-              className="space-y-4"
+              className="space-y-4 pb-4"
             >
               <div>
                 <Label htmlFor="name">Product Name</Label>
@@ -250,13 +283,102 @@ export default function Products() {
                   defaultValue={editingProduct?.image || ""}
                 />
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save Product</Button>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Enter product description..."
+                  defaultValue={editingProduct?.description || ""}
+                  rows={2}
+                />
+              </div>
+              <div>
+                <Label className="mb-3 block">Cutting Types</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {CUTTING_TYPES.map((type) => (
+                    <div key={type} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`cutting-${type}`}
+                        name="cuttingTypes"
+                        value={type}
+                        defaultChecked={editingProduct?.cuttingTypes?.includes(type) || false}
+                      />
+                      <Label htmlFor={`cutting-${type}`} className="font-normal cursor-pointer text-sm">
+                        {type}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </form>
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" form="product-form">Save Product</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Product Details Dialog */}
+        <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
+          <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+            <DialogHeader>
+              <DialogTitle>Product Details</DialogTitle>
+            </DialogHeader>
+            {viewingProduct && (
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  {viewingProduct.image && viewingProduct.image.startsWith("http") ? (
+                    <img src={viewingProduct.image} alt={viewingProduct.name} className="h-32 w-32 rounded-lg object-cover" />
+                  ) : (
+                    <div className="h-32 w-32 flex items-center justify-center text-4xl rounded-lg bg-muted">{viewingProduct.image}</div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <h3 className="text-xl font-semibold">{viewingProduct.name}</h3>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Category</p>
+                        <p className="font-medium">{viewingProduct.category}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Current Price</p>
+                        <p className="font-medium">₹{viewingProduct.currentPrice}/KG</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Previous Price</p>
+                        <p className="text-sm">₹{viewingProduct.previousPrice}/KG</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Status</p>
+                        <Badge variant={viewingProduct.availability ? "default" : "secondary"}>
+                          {viewingProduct.availability ? "In Stock" : "Out of Stock"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 border-t pt-4">
+                  <h4 className="font-semibold">Description</h4>
+                  <p className="text-sm text-muted-foreground">{viewingProduct.description || "No description provided"}</p>
+                </div>
+
+                {viewingProduct.cuttingTypes && viewingProduct.cuttingTypes.length > 0 && (
+                  <div className="space-y-2 border-t pt-4">
+                    <h4 className="font-semibold">Available Cutting Types</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {viewingProduct.cuttingTypes.map((type) => (
+                        <Badge key={type} variant="secondary" className="text-xs">
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -322,6 +444,9 @@ export default function Products() {
                 <td className="text-sm text-muted-foreground">{product.updatedAt}</td>
                 <td>
                   <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" title="View Details" onClick={() => handleViewDetails(product)}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(product)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
