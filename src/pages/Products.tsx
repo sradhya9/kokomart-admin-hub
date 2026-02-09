@@ -40,6 +40,7 @@ interface Product {
   image: string;
   description?: string;
   cuttingTypes?: string[];
+  unit?: string;
 }
 
 // Cutting types options
@@ -51,7 +52,9 @@ const CUTTING_TYPES = [
   "Boneless",
   "With Bone",
   "Breast",
-  "Whole Chicken"
+  "Whole Chicken",
+  "White Egg",
+  "Brown Egg"
 ];
 
 // Initial products removed, fetching from Firebase
@@ -87,7 +90,8 @@ export default function Products() {
           updatedAt: "N/A", // Timestamp not in sample, defaulting
           image: data.image,
           description: data.description || "",
-          cuttingTypes: Array.isArray(data.cutting_types) ? data.cutting_types : []
+          cuttingTypes: Array.isArray(data.cutting_types) ? data.cutting_types : [],
+          unit: data.unit || "KG"
         } as Product;
       });
       setProducts(fetchedProducts);
@@ -132,6 +136,7 @@ export default function Products() {
     const availability = formData.get("availability") === "on";
     const description = formData.get("description") as string;
     const cuttingTypes = formData.getAll("cuttingTypes") as string[];
+    const unit = (formData.get("unit") as string) || "KG";
 
     try {
       if (editingProduct) {
@@ -154,7 +159,8 @@ export default function Products() {
           availability,
           image: (formData.get("image") as string) || editingProduct.image,
           description,
-          cutting_types: cuttingTypes
+          cutting_types: cuttingTypes,
+          unit
         });
 
       } else {
@@ -169,6 +175,7 @@ export default function Products() {
           image: (formData.get("image") as string) || "https://placehold.co/600x400?text=Product",
           description,
           cutting_types: cuttingTypes,
+          unit,
           created_at: new Date().toISOString()
         });
       }
@@ -256,15 +263,32 @@ export default function Products() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="price">Price (₹/KG)</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  defaultValue={editingProduct?.currentPrice || ""}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="price">Price</Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    placeholder="Enter price"
+                    defaultValue={editingProduct?.currentPrice || ""}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="unit">Unit</Label>
+                  <Select name="unit" defaultValue={editingProduct?.unit || "KG"}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="KG">KG</SelectItem>
+                      <SelectItem value="PC">PC</SelectItem>
+                      <SelectItem value="liter">liter</SelectItem>
+                      <SelectItem value="dozen">dozen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Switch
@@ -344,11 +368,11 @@ export default function Products() {
                       </div>
                       <div>
                         <p className="text-muted-foreground">Current Price</p>
-                        <p className="font-medium">₹{viewingProduct.currentPrice}/KG</p>
+                        <p className="font-medium">₹{viewingProduct.currentPrice}/{viewingProduct.unit || "KG"}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Previous Price</p>
-                        <p className="text-sm">₹{viewingProduct.previousPrice}/KG</p>
+                        <p className="text-sm">₹{viewingProduct.previousPrice}/{viewingProduct.unit || "KG"}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Status</p>
@@ -414,8 +438,8 @@ export default function Products() {
                 <td>
                   <Badge variant="secondary">{product.category}</Badge>
                 </td>
-                <td className="font-semibold">₹{product.currentPrice}/KG</td>
-                <td className="text-muted-foreground">₹{product.previousPrice}/KG</td>
+                <td className="font-semibold">₹{product.currentPrice}/{product.unit || "KG"}</td>
+                <td className="text-muted-foreground">₹{product.previousPrice}/{product.unit || "KG"}</td>
                 <td>
                   <div
                     className={cn(

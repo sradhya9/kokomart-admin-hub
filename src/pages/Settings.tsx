@@ -13,7 +13,7 @@ export default function Settings() {
     deliveryCharge: 30,
     gstPercentage: 5,
     serviceFee: 10,
-    appName: "KoKoMart",
+    appName: "Meat Up",
   });
 
   const handleSave = () => {

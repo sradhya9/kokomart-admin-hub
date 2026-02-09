@@ -63,7 +63,7 @@ export function Header({ title, subtitle, onRefresh }: HeaderProps) {
           </Avatar>
           <div className="hidden sm:block">
             <p className="text-sm font-medium">Admin User</p>
-            <p className="text-xs text-muted-foreground">admin@kokomart.com</p>
+            <p className="text-xs text-muted-foreground">admin@meatup.com</p>
           </div>
         </div>
       </div>
