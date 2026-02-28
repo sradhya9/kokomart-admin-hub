@@ -19,7 +19,7 @@ import {
 import { Search, Eye, ChevronRight, Check, User, MapPin, FileText, Package, CreditCard, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, doc, updateDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, orderBy } from "firebase/firestore";
 
 interface OrderItem {
   name: string;
@@ -78,7 +78,7 @@ export default function Orders() {
   const statusesForFilter = ["all", ...statusFlow, ...extraStatuses];
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "orders"), (snapshot) => {
+    const unsub = onSnapshot(query(collection(db, "orders"), orderBy("created_at", "desc")), (snapshot) => {
       const processOrders = async () => {
         const fetchedOrders = await Promise.all(snapshot.docs.map(async (docSnap) => {
           const data = docSnap.data();
@@ -128,9 +128,6 @@ export default function Orders() {
             note: data.note || ""
           } as Order;
         }));
-
-        // Sort by date desc (if not querying with orderBy)
-        fetchedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         setOrders(fetchedOrders);
       };
