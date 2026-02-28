@@ -41,6 +41,35 @@ interface Product {
   description?: string;
   cuttingTypes?: string[];
   unit?: string;
+  availableDays?: number[]; // 0=Sun, 1=Mon, ..., 6=Sat. Empty/undefined = all days
+  displayOrder?: number; // customer-facing sort order, lower = shown first
+}
+
+// Days of week
+const DAYS_OF_WEEK = [
+  { label: "Sunday", value: 0 },
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+];
+
+function getNextAvailableDay(availableDays: number[]): string {
+  if (!availableDays || availableDays.length === 0) return "";
+  const today = new Date();
+  const todayDay = today.getDay();
+  // find soonest upcoming day (could be today)
+  let minDiff = 8;
+  for (const d of availableDays) {
+    let diff = (d - todayDay + 7) % 7;
+    if (diff === 0) diff = 7; // already past or not today, so next week
+    if (diff < minDiff) { minDiff = diff; }
+  }
+  const next = new Date(today);
+  next.setDate(today.getDate() + minDiff);
+  return next.toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric" });
 }
 
 // Cutting types options
@@ -99,9 +128,13 @@ export default function Products() {
           image: data.image,
           description: data.description || "",
           cuttingTypes: Array.isArray(data.cutting_types) ? data.cutting_types : [],
-          unit: data.unit || "KG"
+          unit: data.unit || "KG",
+          availableDays: Array.isArray(data.available_days) ? data.available_days : [],
+          displayOrder: typeof data.display_order === "number" ? data.display_order : 9999,
         } as Product;
       });
+      // Sort by display_order ascending so table reflects customer order
+      fetchedProducts.sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999));
       setProducts(fetchedProducts);
     });
     return () => unsub();
@@ -141,6 +174,7 @@ export default function Products() {
     const description = formData.get("description") as string;
     const cuttingTypes = formData.getAll("cuttingTypes") as string[];
     const unit = (formData.get("unit") as string) || "KG";
+    const displayOrder = formData.get("displayOrder") !== "" ? Number(formData.get("displayOrder")) : 9999;
 
     try {
       if (editingProduct) {
@@ -153,6 +187,9 @@ export default function Products() {
         const percentage = (Math.abs(priceChange) / currentPrice) * 100;
         const direction = priceChange > 0 ? "up" : priceChange < 0 ? "down" : "same";
 
+        const availableDaysRaw = formData.getAll("availableDays");
+        const availableDaysParsed = availableDaysRaw.map(Number);
+
         await updateDoc(doc(db, "products", editingProduct.id), {
           name,
           category,
@@ -164,10 +201,15 @@ export default function Products() {
           image: (formData.get("image") as string) || editingProduct.image,
           description,
           cutting_types: cuttingTypes,
-          unit
+          unit,
+          available_days: availableDaysParsed,
+          display_order: displayOrder,
         });
 
       } else {
+        const availableDaysRaw = formData.getAll("availableDays");
+        const availableDaysParsed = availableDaysRaw.map(Number);
+
         await addDoc(collection(db, "products"), {
           name,
           category,
@@ -180,6 +222,8 @@ export default function Products() {
           description,
           cutting_types: cuttingTypes,
           unit,
+          available_days: availableDaysParsed,
+          display_order: displayOrder,
           created_at: new Date().toISOString()
         });
       }
@@ -294,6 +338,18 @@ export default function Products() {
                   </Select>
                 </div>
               </div>
+              <div>
+                <Label htmlFor="displayOrder">Display Order</Label>
+                <p className="text-xs text-muted-foreground mb-1">Lower number = shown first to customers (e.g. 1 appears before 2)</p>
+                <Input
+                  id="displayOrder"
+                  name="displayOrder"
+                  type="number"
+                  min="1"
+                  placeholder="e.g. 1, 2, 3..."
+                  defaultValue={editingProduct?.displayOrder !== 9999 ? editingProduct?.displayOrder : ""}
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <Switch
                   id="availability"
@@ -334,6 +390,29 @@ export default function Products() {
                       />
                       <Label htmlFor={`cutting-${type}`} className="font-normal cursor-pointer text-sm">
                         {type}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Day-of-week availability */}
+              <div className="border rounded-lg p-4 bg-muted/30">
+                <Label className="mb-1 block font-semibold">Available Days</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Leave all unchecked = available every day. Check specific days to restrict ordering to those days only.
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {DAYS_OF_WEEK.map((day) => (
+                    <div key={day.value} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`day-${day.value}`}
+                        name="availableDays"
+                        value={String(day.value)}
+                        defaultChecked={editingProduct?.availableDays?.includes(day.value) || false}
+                      />
+                      <Label htmlFor={`day-${day.value}`} className="font-normal cursor-pointer text-sm">
+                        {day.label}
                       </Label>
                     </div>
                   ))}
@@ -384,6 +463,25 @@ export default function Products() {
                           {viewingProduct.availability ? "In Stock" : "Out of Stock"}
                         </Badge>
                       </div>
+                      <div>
+                        <p className="text-muted-foreground">Available Days</p>
+                        {viewingProduct.availableDays && viewingProduct.availableDays.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {viewingProduct.availableDays.map(d => (
+                              <Badge key={d} variant="outline" className="text-xs">
+                                {DAYS_OF_WEEK[d].label}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="font-medium text-sm">Every day</p>
+                        )}
+                        {viewingProduct.availableDays && viewingProduct.availableDays.length > 0 && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            Next available: {getNextAvailableDay(viewingProduct.availableDays)}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -416,6 +514,7 @@ export default function Products() {
         <table className="data-table">
           <thead>
             <tr>
+              <th className="w-12 text-center">#</th>
               <th>Product</th>
               <th>Category</th>
               <th>Current Price</th>
@@ -429,6 +528,11 @@ export default function Products() {
           <tbody>
             {filteredProducts.map((product) => (
               <tr key={product.id} className="animate-fade-in">
+                <td className="text-center">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {product.displayOrder !== 9999 ? product.displayOrder : "–"}
+                  </span>
+                </td>
                 <td>
                   <div className="flex items-center gap-3">
                     {product.image && product.image.startsWith("http") ? (
@@ -458,16 +562,23 @@ export default function Products() {
                   </div>
                 </td>
                 <td>
-                  <Badge
-                    variant={product.availability ? "default" : "secondary"}
-                    className={cn(
-                      product.availability
-                        ? "bg-success/10 text-success hover:bg-success/20"
-                        : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  <div className="flex flex-col gap-1">
+                    <Badge
+                      variant={product.availability ? "default" : "secondary"}
+                      className={cn(
+                        product.availability
+                          ? "bg-success/10 text-success hover:bg-success/20"
+                          : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                      )}
+                    >
+                      {product.availability ? "In Stock" : "Out of Stock"}
+                    </Badge>
+                    {product.availableDays && product.availableDays.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {product.availableDays.map(d => DAYS_OF_WEEK[d].label.slice(0, 3)).join(", ")} only
+                      </span>
                     )}
-                  >
-                    {product.availability ? "In Stock" : "Out of Stock"}
-                  </Badge>
+                  </div>
                 </td>
                 <td className="text-sm text-muted-foreground">{product.updatedAt}</td>
                 <td>
