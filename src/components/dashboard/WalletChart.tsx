@@ -11,6 +11,10 @@ interface WalletChartProps {
   data: { name: string; value: number; color: string }[];
 }
 
+// Override with palette colors regardless of passed-in color prop
+const WALLET_COLORS = ["#63020c", "#1DB954", "#fdf8e4"];
+const BORDER_COLOR = "hsl(40 60% 86%)";
+
 export function WalletChart({ data = [] }: WalletChartProps) {
   return (
     <div className="chart-container animate-fade-in">
@@ -25,21 +29,26 @@ export function WalletChart({ data = [] }: WalletChartProps) {
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={5}
+              innerRadius={65}
+              outerRadius={105}
+              paddingAngle={4}
               dataKey="value"
             >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+              {data.map((_, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={WALLET_COLORS[index % WALLET_COLORS.length]}
+                  stroke="transparent"
+                />
               ))}
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(0 0% 100%)",
-                border: "1px solid hsl(220 13% 91%)",
-                borderRadius: "8px",
-                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                backgroundColor: "#fdf8e4",
+                border: `1px solid ${BORDER_COLOR}`,
+                borderRadius: "10px",
+                boxShadow: "0 4px 16px rgba(99,2,12,0.12)",
+                color: "#200f0f",
               }}
               formatter={(value: number) => [value.toLocaleString(), "Points"]}
             />
@@ -47,7 +56,7 @@ export function WalletChart({ data = [] }: WalletChartProps) {
               verticalAlign="bottom"
               height={36}
               formatter={(value) => (
-                <span className="text-sm text-muted-foreground">{value}</span>
+                <span className="text-xs text-muted-foreground font-medium">{value}</span>
               )}
             />
           </PieChart>
