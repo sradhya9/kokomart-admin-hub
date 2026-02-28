@@ -6,11 +6,24 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 
 interface ProductSalesChartProps {
   data: { name: string; sales: number; fill?: string }[];
 }
+
+const BORDER_COLOR = "hsl(40 60% 86%)";
+const AXIS_COLOR = "hsl(5 30% 55%)";
+
+// Red/maroon palette variants for bar chart
+const BAR_COLORS = [
+  "#63020c", // deep red
+  "#8f0503", // mid red
+  "#74111B", // deep teal dark
+  "#c70404", // extrared
+  "#4d0808", // darkest maroon
+];
 
 export function ProductSalesChart({ data = [] }: ProductSalesChartProps) {
   return (
@@ -22,10 +35,10 @@ export function ProductSalesChart({ data = [] }: ProductSalesChartProps) {
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 91%)" horizontal={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={BORDER_COLOR} horizontal={false} />
             <XAxis
               type="number"
-              stroke="hsl(220 9% 46%)"
+              stroke={AXIS_COLOR}
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -34,7 +47,7 @@ export function ProductSalesChart({ data = [] }: ProductSalesChartProps) {
             <YAxis
               dataKey="name"
               type="category"
-              stroke="hsl(220 9% 46%)"
+              stroke={AXIS_COLOR}
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -42,14 +55,22 @@ export function ProductSalesChart({ data = [] }: ProductSalesChartProps) {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(0 0% 100%)",
-                border: "1px solid hsl(220 13% 91%)",
-                borderRadius: "8px",
-                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                backgroundColor: "#fdf8e4",
+                border: `1px solid ${BORDER_COLOR}`,
+                borderRadius: "10px",
+                boxShadow: "0 4px 16px rgba(99,2,12,0.12)",
+                color: "#200f0f",
               }}
               formatter={(value: number) => [`₹${value.toLocaleString()}`, "Revenue"]}
             />
-            <Bar dataKey="sales" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="sales" radius={[0, 6, 6, 0]}>
+              {data.map((_, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={BAR_COLORS[index % BAR_COLORS.length]}
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -22,9 +22,9 @@ export default function Dashboard() {
   const [salesChartData, setSalesChartData] = useState<any[]>([]);
   const [productSalesData, setProductSalesData] = useState<any[]>([]);
   const [walletData, setWalletData] = useState<any[]>([
-    { name: "Points Issued", value: 0, color: "hsl(38 92% 50%)" },
-    { name: "Points Redeemed", value: 0, color: "hsl(142 76% 36%)" },
-    { name: "Points Pending", value: 0, color: "hsl(220 14% 80%)" },
+    { name: "Points Issued", value: 0, color: "hsl(355 93% 20%)" },
+    { name: "Points Redeemed", value: 0, color: "hsl(141 73% 42%)" },
+    { name: "Points Pending", value: 0, color: "hsl(40 95% 78%)" },
   ]);
 
   useEffect(() => {
