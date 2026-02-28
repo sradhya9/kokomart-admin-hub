@@ -57,6 +57,14 @@ const CUTTING_TYPES = [
   "Brown Egg"
 ];
 
+// default category options shown in selectors/filters
+const DEFAULT_CATEGORIES = [
+  "Farm Chicken",
+  "Halal Chicken",
+  "Eggs",
+  "Beef",
+];
+
 // Initial products removed, fetching from Firebase
 
 export default function Products() {
@@ -99,14 +107,10 @@ export default function Products() {
     return () => unsub();
   }, []);
 
-  // Compute categories from fetched products if possible, or keep static list?
-  // Original code: const categories = [...new Set(products.map((p) => p.category))];
-  // Fetching might take time, so categories might be empty initially.
-  // We can default common categories or wait.
-  // The original one derived from products which is fine.
+  // compute available category options. include defaults so select always has reasonable choices
   const categories = products.length > 0
-    ? [...new Set(products.map((p) => p.category))]
-    : ["Standard", "Whole Meat", "Farm Chicken"]; // Fallbacks
+    ? [...new Set([...products.map((p) => p.category), ...DEFAULT_CATEGORIES])]
+    : DEFAULT_CATEGORIES; // start with defaults until products arrive
 
   const getPriceIcon = (direction: string) => {
     switch (direction) {
