@@ -259,195 +259,240 @@ export default function Orders() {
 
       {/* Order Detail Dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="pb-4">
-            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Package className="h-6 w-6" />
-              Order Details - {selectedOrder?.display_id || selectedOrder?.id}
-            </DialogTitle>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {selectedOrder?.createdAt}
-              </span>
-              <span className={cn("px-3 py-1 rounded-full text-xs font-medium", statusStyles[selectedOrder?.status || ""])}>
+        <DialogContent className="w-full max-w-3xl max-h-[90vh] p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden flex flex-col">
+          {/* Modal Header */}
+          <div className="gradient-primary p-6 pr-12">
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm flex-shrink-0">
+                <Package className="h-4 w-4 text-white" />
+              </div>
+              <DialogTitle className="text-xl font-bold text-white tracking-tight">
+                Order Details
+              </DialogTitle>
+            </div>
+            <div className="flex items-center gap-3 ml-11">
+              <p className="text-sm font-semibold text-white/80 font-mono">
+                #{selectedOrder?.display_id || selectedOrder?.id}
+              </p>
+              <span className={cn("status-badge text-xs font-semibold", statusStyles[selectedOrder?.status || ""])}>
                 {statusLabels[selectedOrder?.status || ""]}
               </span>
+              <span className="flex items-center gap-1 text-xs text-white/60 ml-auto">
+                <Clock className="h-3 w-3" />
+                {selectedOrder?.createdAt}
+              </span>
             </div>
-          </DialogHeader>
+          </div>
+
           {selectedOrder && (
-            <div className="space-y-6">
+            <div className="p-6 space-y-5 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ background: 'hsl(var(--background))' }}>
               {/* Cancelled banner */}
               {selectedOrder.status === "CANCELLED" && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-                  <div className="flex items-center gap-2 text-red-800">
-                    <div className="h-2 w-2 bg-red-500 rounded-full"></div>
-                    <strong className="text-sm font-semibold">Order Cancelled</strong>
+                <div className="rounded-xl border border-red-200 p-4" style={{ background: 'hsl(356 80% 97%)' }}>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 bg-red-500 rounded-full flex-shrink-0" />
+                    <strong className="text-sm font-semibold text-red-800">Order Cancelled</strong>
                   </div>
-                  <p className="text-sm text-red-700 mt-1">This order has been cancelled and will not be processed.</p>
+                  <p className="text-sm text-red-600 mt-1 ml-4">This order has been cancelled and will not be processed.</p>
                 </div>
               )}
 
-              {/* Order Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CreditCard className="h-5 w-5 text-blue-600" />
-                    <h4 className="font-semibold text-blue-900">Total Amount</h4>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-800">₹{selectedOrder.finalAmount.toLocaleString()}</p>
+              {/* Stats Row */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-xl border p-4 text-center" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Total Amount</p>
+                  <p className="text-xl font-bold" style={{ color: 'hsl(var(--primary))' }}>₹{selectedOrder.finalAmount.toLocaleString()}</p>
                 </div>
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Package className="h-5 w-5 text-green-600" />
-                    <h4 className="font-semibold text-green-900">Items</h4>
-                  </div>
-                  <p className="text-2xl font-bold text-green-800">{selectedOrder.items.length}</p>
+                <div className="rounded-xl border p-4 text-center" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Items</p>
+                  <p className="text-xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{selectedOrder.items.length}</p>
                 </div>
-                <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg p-4 border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="h-5 w-5 text-purple-600" />
-                    <h4 className="font-semibold text-purple-900">Payment</h4>
-                  </div>
-                  <p className="text-lg font-semibold text-purple-800">{selectedOrder.paymentMethod}</p>
+                <div className="rounded-xl border p-4 text-center" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Payment</p>
+                  <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{selectedOrder.paymentMethod}</p>
                 </div>
               </div>
 
               {/* Customer Info */}
-              <div className="bg-white rounded-lg border shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <User className="h-5 w-5 text-gray-600" />
-                  <h4 className="text-lg font-semibold">Customer Information</h4>
+              <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                <div className="px-4 py-2.5 flex items-center gap-2 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                  <User className="h-4 w-4" style={{ color: 'hsl(var(--primary))' }} />
+                  <h4 className="text-sm font-semibold tracking-wide uppercase" style={{ color: 'hsl(var(--foreground))' }}>Customer Information</h4>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4" style={{ background: 'hsl(var(--card))' }}>
                   <div>
-                    <p className="font-medium text-gray-900">{selectedOrder.customer}</p>
-                    <p className="text-sm text-gray-600 mt-1">{selectedOrder.phone}</p>
+                    <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Name & Phone</p>
+                    <p className="font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{selectedOrder.customer}</p>
+                    <p className="text-sm mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{selectedOrder.phone}</p>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                    <p className="text-sm text-gray-600">{selectedOrder.address}</p>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Delivery Address</p>
+                    <div className="flex items-start gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" style={{ color: 'hsl(var(--primary))' }} />
+                      <p className="text-sm leading-relaxed" style={{ color: 'hsl(var(--foreground))' }}>{selectedOrder.address || "No address provided"}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Order Note */}
-              <div className="bg-white rounded-lg border shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText className="h-5 w-5 text-gray-600" />
-                  <h4 className="text-lg font-semibold">Order Note</h4>
+              {selectedOrder.note && (
+                <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                  <div className="px-4 py-2.5 flex items-center gap-2 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                    <FileText className="h-4 w-4" style={{ color: 'hsl(var(--primary))' }} />
+                    <h4 className="text-sm font-semibold tracking-wide uppercase" style={{ color: 'hsl(var(--foreground))' }}>Order Note</h4>
+                  </div>
+                  <div className="p-4" style={{ background: 'hsl(var(--card))' }}>
+                    <p className="text-sm leading-relaxed" style={{ color: 'hsl(var(--foreground))' }}>{selectedOrder.note}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-700 leading-relaxed">{selectedOrder.note || "No note provided"}</p>
-              </div>
+              )}
 
               {/* Items */}
-              <div className="bg-white rounded-lg border shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Package className="h-5 w-5 text-gray-600" />
-                  <h4 className="text-lg font-semibold">Order Items</h4>
+              <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                <div className="px-4 py-2.5 flex items-center gap-2 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                  <Package className="h-4 w-4" style={{ color: 'hsl(var(--primary))' }} />
+                  <h4 className="text-sm font-semibold tracking-wide uppercase" style={{ color: 'hsl(var(--foreground))' }}>Order Items</h4>
+                  <span className="ml-auto text-xs font-semibold rounded-full px-2 py-0.5" style={{ background: 'hsl(var(--primary) / 0.12)', color: 'hsl(var(--primary))' }}>
+                    {selectedOrder.items.length} {selectedOrder.items.length === 1 ? 'item' : 'items'}
+                  </span>
                 </div>
-                <div className="space-y-3">
+                <div style={{ background: 'hsl(var(--card))' }}>
                   {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.name}</p>
-                        <div className="flex items-center gap-4 mt-1">
-                          <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                          {item.cuttingType && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              Cutting: {item.cuttingType}
-                            </span>
-                          )}
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex justify-between items-center px-4 py-3.5",
+                        index !== selectedOrder.items.length - 1 && "border-b"
+                      )}
+                      style={{ borderColor: 'hsl(var(--border) / 0.6)' }}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 text-xs font-bold"
+                          style={{ background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' }}>
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm" style={{ color: 'hsl(var(--foreground))' }}>{item.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Qty: {item.quantity}</span>
+                            {item.cuttingType && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                                style={{ background: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
+                                ✂ {item.cuttingType}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <p className="font-semibold text-gray-900">₹{item.price.toLocaleString()}</p>
+                      <p className="font-semibold text-sm" style={{ color: 'hsl(var(--foreground))' }}>₹{item.price.toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Price Breakdown */}
-              <div className="bg-white rounded-lg border shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <CreditCard className="h-5 w-5 text-gray-600" />
-                  <h4 className="text-lg font-semibold">Price Breakdown</h4>
+              <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                <div className="px-4 py-2.5 flex items-center gap-2 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                  <CreditCard className="h-4 w-4" style={{ color: 'hsl(var(--primary))' }} />
+                  <h4 className="text-sm font-semibold tracking-wide uppercase" style={{ color: 'hsl(var(--foreground))' }}>Price Breakdown</h4>
                 </div>
-                <div className="space-y-3">
+                <div className="p-4 space-y-2.5" style={{ background: 'hsl(var(--card))' }}>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">₹{selectedOrder.subtotal.toLocaleString()}</span>
+                    <span style={{ color: 'hsl(var(--muted-foreground))' }}>Subtotal</span>
+                    <span className="font-medium" style={{ color: 'hsl(var(--foreground))' }}>₹{selectedOrder.subtotal.toLocaleString()}</span>
                   </div>
                   {selectedOrder.discount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Discount</span>
-                      <span className="font-medium">-₹{selectedOrder.discount.toLocaleString()}</span>
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: 'hsl(141 73% 35%)' }}>Discount Applied</span>
+                      <span className="font-medium" style={{ color: 'hsl(141 73% 35%)' }}>−₹{selectedOrder.discount.toLocaleString()}</span>
                     </div>
                   )}
                   {selectedOrder.walletUsed > 0 && (
-                    <div className="flex justify-between text-sm text-blue-600">
-                      <span>Wallet Points Used</span>
-                      <span className="font-medium">-₹{selectedOrder.walletUsed.toLocaleString()}</span>
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: 'hsl(var(--primary))' }}>Wallet Points Used</span>
+                      <span className="font-medium" style={{ color: 'hsl(var(--primary))' }}>−₹{selectedOrder.walletUsed.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-bold text-lg pt-3 border-t border-gray-200">
-                    <span>Total</span>
-                    <span className="text-green-600">₹{selectedOrder.finalAmount.toLocaleString()}</span>
+                  <div className="flex justify-between items-center pt-3 mt-1 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
+                    <span className="font-bold text-base" style={{ color: 'hsl(var(--foreground))' }}>Total Paid</span>
+                    <span className="font-bold text-lg" style={{ color: 'hsl(var(--primary))' }}>₹{selectedOrder.finalAmount.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
               {/* Status Timeline */}
-              <div className="bg-white rounded-lg border shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <Clock className="h-5 w-5 text-gray-600" />
-                  <h4 className="text-lg font-semibold">Order Status Timeline</h4>
+              <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                <div className="px-4 py-2.5 flex items-center gap-2 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                  <Clock className="h-4 w-4" style={{ color: 'hsl(var(--primary))' }} />
+                  <h4 className="text-sm font-semibold tracking-wide uppercase" style={{ color: 'hsl(var(--foreground))' }}>Order Progress</h4>
                 </div>
-                <div className="relative">
-                  {/* Background connecting line */}
-                  <div className="absolute top-5 left-5 right-5 h-0.5 bg-gray-200"></div>
-                  
-                  <div className="relative flex items-center justify-between px-5">
-                    {statusFlow.map((status, index) => {
-                      const currentIndex = statusFlow.indexOf(selectedOrder.status);
-                      const isCompleted = index <= currentIndex;
-                      const isCurrent = status === selectedOrder.status;
-                      return (
-                        <div key={status} className="flex flex-col items-center relative">
-                          <div
-                            className={cn(
-                              "flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-medium transition-all duration-300 shadow-sm",
-                              isCompleted
-                                ? "bg-green-500 border-green-500 text-white"
-                                : isCurrent
-                                ? "bg-blue-500 border-blue-500 text-white animate-pulse"
-                                : "bg-white border-gray-300 text-gray-500"
-                            )}
-                          >
-                            {isCompleted ? <Check className="h-5 w-5" /> : index + 1}
+                <div className="p-5" style={{ background: 'hsl(var(--card))' }}>
+                  <div className="relative">
+                    {/* Background line */}
+                    <div className="absolute top-4 left-4 right-4 h-0.5" style={{ background: 'hsl(var(--border))' }} />
+                    {/* Progress line */}
+                    <div
+                      className="absolute top-4 left-4 h-0.5 transition-all duration-700"
+                      style={{
+                        background: 'hsl(var(--primary))',
+                        width: selectedOrder.status === "CANCELLED"
+                          ? "0%"
+                          : `${(statusFlow.indexOf(selectedOrder.status) / (statusFlow.length - 1)) * 100}%`
+                      }}
+                    />
+                    <div className="relative flex items-start justify-between">
+                      {statusFlow.map((status, index) => {
+                        const currentIndex = statusFlow.indexOf(selectedOrder.status);
+                        const isCompleted = index < currentIndex;
+                        const isCurrent = index === currentIndex && selectedOrder.status !== "CANCELLED";
+                        return (
+                          <div key={status} className="flex flex-col items-center" style={{ width: `${100 / statusFlow.length}%` }}>
+                            <div
+                              className={cn(
+                                "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all duration-300 z-10",
+                                isCompleted
+                                  ? "text-white border-transparent"
+                                  : isCurrent
+                                    ? "text-white border-transparent"
+                                    : "border-2"
+                              )}
+                              style={{
+                                background: isCompleted
+                                  ? 'hsl(var(--primary))'
+                                  : isCurrent
+                                    ? 'hsl(var(--primary))'
+                                    : 'hsl(var(--card))',
+                                borderColor: isCompleted || isCurrent
+                                  ? 'hsl(var(--primary))'
+                                  : 'hsl(var(--border))',
+                                color: isCompleted || isCurrent ? 'white' : 'hsl(var(--muted-foreground))',
+                                boxShadow: isCurrent ? '0 0 0 4px hsl(var(--primary) / 0.15)' : 'none'
+                              }}
+                            >
+                              {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
+                            </div>
+                            <p
+                              className="text-center mt-2 leading-tight font-medium"
+                              style={{
+                                fontSize: '10px',
+                                color: isCompleted || isCurrent
+                                  ? 'hsl(var(--primary))'
+                                  : 'hsl(var(--muted-foreground))'
+                              }}
+                            >
+                              {statusLabels[status]}
+                            </p>
                           </div>
-                          <p className={cn(
-                            "text-xs text-center mt-3 font-medium max-w-20 leading-tight",
-                            isCompleted 
-                              ? "text-green-700" 
-                              : isCurrent 
-                              ? "text-blue-700" 
-                              : "text-gray-500"
-                          )}>
-                            {statusLabels[status]}
-                          </p>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                  
-                  {/* Active progress line */}
-                  <div className="absolute top-5 left-5 h-0.5 bg-green-500 transition-all duration-500"
-                       style={{
-                         width: selectedOrder.status === "CANCELLED" 
-                           ? "0%" 
-                           : `${((statusFlow.indexOf(selectedOrder.status) + 1) / statusFlow.length) * 100}%`
-                       }}>
-                  </div>
+                  {selectedOrder.status === "CANCELLED" && (
+                    <p className="text-center text-xs font-semibold mt-4 py-2 rounded-lg" style={{ color: 'hsl(356 80% 47%)', background: 'hsl(356 80% 97%)' }}>
+                      This order was cancelled and did not progress through the pipeline.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
