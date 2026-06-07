@@ -97,7 +97,9 @@ const CUTTING_TYPES = [
   "Breast",
   "Whole Chicken",
   "White Egg",
-  "Brown Egg"
+  "Brown Egg",
+  "Shawaya cut",
+  "Alfaham Cut"
 ];
 
 // default category options shown in selectors/filters
@@ -377,8 +379,8 @@ export default function Products() {
                 isUpdatingBulk
                   ? "text-muted-foreground"
                   : anyInStock
-                  ? "text-success"
-                  : "text-destructive"
+                    ? "text-success"
+                    : "text-destructive"
               )}>
                 {isUpdatingBulk ? "Updating..." : anyInStock ? "Active / In Stock" : "All Out of Stock"}
               </span>
@@ -409,172 +411,172 @@ export default function Products() {
                 Add Product
               </Button>
             </DialogTrigger>
-          <DialogContent className="w-full max-w-2xl max-h-[90vh] p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="gradient-primary p-5 pr-12">
-              <div className="flex items-center gap-2.5 mb-1">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm flex-shrink-0">
-                  <Pencil className="h-4 w-4 text-white" />
+            <DialogContent className="w-full max-w-2xl max-h-[90vh] p-0 gap-0 rounded-2xl border-0 shadow-2xl overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="gradient-primary p-5 pr-12">
+                <div className="flex items-center gap-2.5 mb-1">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm flex-shrink-0">
+                    <Pencil className="h-4 w-4 text-white" />
+                  </div>
+                  <DialogTitle className="text-xl font-bold text-white tracking-tight">
+                    {editingProduct ? "Edit Product" : "Add New Product"}
+                  </DialogTitle>
                 </div>
-                <DialogTitle className="text-xl font-bold text-white tracking-tight">
-                  {editingProduct ? "Edit Product" : "Add New Product"}
-                </DialogTitle>
+                {editingProduct && (
+                  <p className="text-sm text-white/70 ml-11">{editingProduct.name}</p>
+                )}
               </div>
-              {editingProduct && (
-                <p className="text-sm text-white/70 ml-11">{editingProduct.name}</p>
-              )}
-            </div>
 
-            {/* Scrollable body */}
-            <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ background: 'hsl(var(--background))' }}>
-              <form
-                id="product-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSave(new FormData(e.currentTarget));
-                }}
-                className="p-5 space-y-5"
-              >
-                {/* Basic Info */}
-                <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
-                  <div className="px-4 py-2.5 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--primary))' }}>Basic Information</h4>
-                  </div>
-                  <div className="p-4 space-y-4" style={{ background: 'hsl(var(--card))' }}>
-                    <div>
-                      <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Product Name</Label>
-                      <Input id="name" name="name" defaultValue={editingProduct?.name || ""} required className="focus-visible:ring-primary/40" />
+              {/* Scrollable body */}
+              <div className="overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ background: 'hsl(var(--background))' }}>
+                <form
+                  id="product-form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSave(new FormData(e.currentTarget));
+                  }}
+                  className="p-5 space-y-5"
+                >
+                  {/* Basic Info */}
+                  <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                    <div className="px-4 py-2.5 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--primary))' }}>Basic Information</h4>
                     </div>
-                    <div>
-                      <Label htmlFor="category" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Category</Label>
-                      <Select name="category" defaultValue={editingProduct?.category || categories[0]}>
-                        <SelectTrigger className="focus:ring-primary/40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Description</Label>
-                      <Textarea
-                        id="description"
-                        name="description"
-                        placeholder="Enter product description..."
-                        defaultValue={editingProduct?.description || ""}
-                        rows={2}
-                        className="focus-visible:ring-primary/40"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="image" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Image URL</Label>
-                      <Input id="image" name="image" placeholder="https://example.com/image.jpg" defaultValue={editingProduct?.image || ""} className="focus-visible:ring-primary/40" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pricing & Stock */}
-                <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
-                  <div className="px-4 py-2.5 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--primary))' }}>Pricing & Stock</h4>
-                  </div>
-                  <div className="p-4 space-y-4" style={{ background: 'hsl(var(--card))' }}>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 space-y-4" style={{ background: 'hsl(var(--card))' }}>
                       <div>
-                        <Label htmlFor="price" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Price (₹)</Label>
-                        <Input id="price" name="price" type="number" placeholder="0.00" defaultValue={editingProduct?.currentPrice || ""} required className="focus-visible:ring-primary/40" />
+                        <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Product Name</Label>
+                        <Input id="name" name="name" defaultValue={editingProduct?.name || ""} required className="focus-visible:ring-primary/40" />
                       </div>
                       <div>
-                        <Label htmlFor="unit" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Unit</Label>
-                        <Select name="unit" defaultValue={editingProduct?.unit || "KG"}>
-                          <SelectTrigger className="focus:ring-primary/40"><SelectValue /></SelectTrigger>
+                        <Label htmlFor="category" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Category</Label>
+                        <Select name="category" defaultValue={editingProduct?.category || categories[0]}>
+                          <SelectTrigger className="focus:ring-primary/40">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="KG">KG</SelectItem>
-                            <SelectItem value="PC">PC</SelectItem>
-                            <SelectItem value="liter">Liter</SelectItem>
-                            <SelectItem value="dozen">Dozen</SelectItem>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="displayOrder" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Display Order</Label>
-                      <p className="text-xs mb-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>Lower number = shown first to customers (e.g. 1 appears before 2)</p>
-                      <Input id="displayOrder" name="displayOrder" type="number" min="1" placeholder="e.g. 1, 2, 3..." defaultValue={editingProduct?.displayOrder !== 9999 ? editingProduct?.displayOrder : ""} className="focus-visible:ring-primary/40" />
-                    </div>
-                    <div className="flex items-center gap-3 rounded-lg p-3" style={{ background: 'hsl(var(--muted) / 0.4)' }}>
-                      <Switch id="availability" name="availability" defaultChecked={editingProduct?.availability ?? true} />
                       <div>
-                        <Label htmlFor="availability" className="font-semibold text-sm cursor-pointer">In Stock</Label>
-                        <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Toggle to mark product availability</p>
+                        <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Description</Label>
+                        <Textarea
+                          id="description"
+                          name="description"
+                          placeholder="Enter product description..."
+                          defaultValue={editingProduct?.description || ""}
+                          rows={2}
+                          className="focus-visible:ring-primary/40"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="image" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Image URL</Label>
+                        <Input id="image" name="image" placeholder="https://example.com/image.jpg" defaultValue={editingProduct?.image || ""} className="focus-visible:ring-primary/40" />
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Cutting Types */}
-                <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
-                  <div className="px-4 py-2.5 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--primary))' }}>Cutting Types</h4>
-                  </div>
-                  <div className="p-4 grid grid-cols-2 gap-2.5" style={{ background: 'hsl(var(--card))' }}>
-                    {CUTTING_TYPES.map((type) => (
-                      <div key={type} className="flex items-center gap-2.5 rounded-lg p-2 transition-colors" style={{ background: 'hsl(var(--muted) / 0.3)' }}>
-                        <Checkbox
-                          id={`cutting-${type}`}
-                          name="cuttingTypes"
-                          value={type}
-                          defaultChecked={editingProduct?.cuttingTypes?.includes(type) || false}
-                          className="border-primary/40 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                        />
-                        <Label htmlFor={`cutting-${type}`} className="font-normal cursor-pointer text-sm leading-tight">{type}</Label>
+                  {/* Pricing & Stock */}
+                  <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                    <div className="px-4 py-2.5 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--primary))' }}>Pricing & Stock</h4>
+                    </div>
+                    <div className="p-4 space-y-4" style={{ background: 'hsl(var(--card))' }}>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="price" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Price (₹)</Label>
+                          <Input id="price" name="price" type="number" placeholder="0.00" defaultValue={editingProduct?.currentPrice || ""} required className="focus-visible:ring-primary/40" />
+                        </div>
+                        <div>
+                          <Label htmlFor="unit" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Unit</Label>
+                          <Select name="unit" defaultValue={editingProduct?.unit || "KG"}>
+                            <SelectTrigger className="focus:ring-primary/40"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="KG">KG</SelectItem>
+                              <SelectItem value="PC">PC</SelectItem>
+                              <SelectItem value="liter">Liter</SelectItem>
+                              <SelectItem value="dozen">Dozen</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    ))}
+                      <div>
+                        <Label htmlFor="displayOrder" className="text-xs font-semibold uppercase tracking-wide mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Display Order</Label>
+                        <p className="text-xs mb-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>Lower number = shown first to customers (e.g. 1 appears before 2)</p>
+                        <Input id="displayOrder" name="displayOrder" type="number" min="1" placeholder="e.g. 1, 2, 3..." defaultValue={editingProduct?.displayOrder !== 9999 ? editingProduct?.displayOrder : ""} className="focus-visible:ring-primary/40" />
+                      </div>
+                      <div className="flex items-center gap-3 rounded-lg p-3" style={{ background: 'hsl(var(--muted) / 0.4)' }}>
+                        <Switch id="availability" name="availability" defaultChecked={editingProduct?.availability ?? true} />
+                        <div>
+                          <Label htmlFor="availability" className="font-semibold text-sm cursor-pointer">In Stock</Label>
+                          <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Toggle to mark product availability</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Available Days */}
-                <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
-                  <div className="px-4 py-2.5 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--primary))' }}>Available Days</h4>
-                  </div>
-                  <div className="p-4" style={{ background: 'hsl(var(--card))' }}>
-                    <p className="text-xs mb-3" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                      Leave all unchecked = available every day. Check specific days to restrict ordering.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {DAYS_OF_WEEK.map((day) => (
-                        <div key={day.value} className="flex items-center gap-2 rounded-lg p-2" style={{ background: 'hsl(var(--muted) / 0.3)' }}>
+                  {/* Cutting Types */}
+                  <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                    <div className="px-4 py-2.5 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--primary))' }}>Cutting Types</h4>
+                    </div>
+                    <div className="p-4 grid grid-cols-2 gap-2.5" style={{ background: 'hsl(var(--card))' }}>
+                      {CUTTING_TYPES.map((type) => (
+                        <div key={type} className="flex items-center gap-2.5 rounded-lg p-2 transition-colors" style={{ background: 'hsl(var(--muted) / 0.3)' }}>
                           <Checkbox
-                            id={`day-${day.value}`}
-                            name="availableDays"
-                            value={String(day.value)}
-                            defaultChecked={editingProduct?.availableDays?.includes(day.value) || false}
+                            id={`cutting-${type}`}
+                            name="cuttingTypes"
+                            value={type}
+                            defaultChecked={editingProduct?.cuttingTypes?.includes(type) || false}
                             className="border-primary/40 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                           />
-                          <Label htmlFor={`day-${day.value}`} className="font-normal cursor-pointer text-sm">{day.label}</Label>
+                          <Label htmlFor={`cutting-${type}`} className="font-normal cursor-pointer text-sm leading-tight">{type}</Label>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
-              </form>
-            </div>
 
-            {/* Footer */}
-            <div className="flex justify-end gap-2 px-5 py-4 border-t" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="hover:bg-muted">
-                Cancel
-              </Button>
-              <Button type="submit" form="product-form" className="gradient-primary text-white border-0 hover:opacity-90">
-                {editingProduct ? "Save Changes" : "Add Product"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                  {/* Available Days */}
+                  <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+                    <div className="px-4 py-2.5 border-b" style={{ background: 'hsl(var(--muted) / 0.5)', borderColor: 'hsl(var(--border))' }}>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--primary))' }}>Available Days</h4>
+                    </div>
+                    <div className="p-4" style={{ background: 'hsl(var(--card))' }}>
+                      <p className="text-xs mb-3" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                        Leave all unchecked = available every day. Check specific days to restrict ordering.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {DAYS_OF_WEEK.map((day) => (
+                          <div key={day.value} className="flex items-center gap-2 rounded-lg p-2" style={{ background: 'hsl(var(--muted) / 0.3)' }}>
+                            <Checkbox
+                              id={`day-${day.value}`}
+                              name="availableDays"
+                              value={String(day.value)}
+                              defaultChecked={editingProduct?.availableDays?.includes(day.value) || false}
+                              className="border-primary/40 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            />
+                            <Label htmlFor={`day-${day.value}`} className="font-normal cursor-pointer text-sm">{day.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-2 px-5 py-4 border-t" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="hover:bg-muted">
+                  Cancel
+                </Button>
+                <Button type="submit" form="product-form" className="gradient-primary text-white border-0 hover:opacity-90">
+                  {editingProduct ? "Save Changes" : "Add Product"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* View Product Details Dialog */}
