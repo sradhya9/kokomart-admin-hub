@@ -229,7 +229,7 @@ export default function Orders() {
             subtotal: data.total_amount || 0,
             discount: data.discount || 0,
             walletUsed: data.wallet_used || 0,
-            deliveryFee: data.delivery_fee || 0,
+            deliveryFee: data.delivery_charge || data.delivery_fee || 0,
             taxAmount: data.tax_amount || 0,
             platformFee: data.platform_fee || 0,
             finalAmount: data.final_amount || 0,
@@ -634,7 +634,7 @@ export default function Orders() {
                   </div>
                   {selectedOrder.deliveryFee > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span style={{ color: 'hsl(var(--muted-foreground))' }}>Delivery Fee</span>
+                      <span style={{ color: 'hsl(var(--muted-foreground))' }}>Delivery Charge</span>
                       <span className="font-medium" style={{ color: 'hsl(var(--foreground))' }}>₹{selectedOrder.deliveryFee.toLocaleString()}</span>
                     </div>
                   )}
