@@ -601,7 +601,11 @@ export default function Orders() {
                           const unit = item.unit?.toLowerCase() || "";
 
                           if ((item as any).price_per_selection) {
-                            return (item.price * item.quantity).toLocaleString();
+                            let total = item.price * item.quantity;
+                            if (unit === 'pc' && weight > 0) {
+                              total = item.price * item.quantity * weight;
+                            }
+                            return total.toLocaleString();
                           }
 
                           if (weight > 0) {
@@ -609,6 +613,8 @@ export default function Orders() {
                               effectivePrice = item.price * weight;
                             } else if (unit === 'gm' || unit === 'g') {
                               effectivePrice = (item.price * weight) / 1000;
+                            } else if (unit === 'pc') {
+                              effectivePrice = item.price * weight;
                             }
                           }
 
