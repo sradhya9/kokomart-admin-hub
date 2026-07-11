@@ -10,8 +10,7 @@ import { Loader2, Mail, Lock, ShieldCheck, ChefHat } from "lucide-react";
 const Login = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { signIn, signUp } = useAuth();
-    const [isLogin, setIsLogin] = useState(true);
+    const { signIn } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -30,13 +29,8 @@ const Login = () => {
 
         setIsLoading(true);
         try {
-            if (isLogin) {
-                await signIn(formData.email, formData.password);
-                toast.success("Welcome back!");
-            } else {
-                await signUp(formData.email, formData.password);
-                toast.success("Admin account created successfully");
-            }
+            await signIn(formData.email, formData.password);
+            toast.success("Welcome back!");
             navigate(from, { replace: true });
         } catch (error: any) {
             console.error("Auth error:", error);
@@ -114,12 +108,10 @@ const Login = () => {
 
                     <div>
                         <h2 className="text-3xl font-extrabold tracking-tight" style={{ color: '#200f0f' }}>
-                            {isLogin ? "Sign in" : "Create admin"}
+                            Sign in
                         </h2>
                         <p className="mt-2 text-sm" style={{ color: '#200f0f99' }}>
-                            {isLogin
-                                ? "Enter your admin credentials to access the dashboard"
-                                : "Register a new administrator account"}
+                            Enter your admin credentials to access the dashboard
                         </p>
                     </div>
 
@@ -158,7 +150,7 @@ const Login = () => {
                                     id="password"
                                     name="password"
                                     type="password"
-                                    autoComplete={isLogin ? "current-password" : "new-password"}
+                                    autoComplete="current-password"
                                     required
                                     className="pl-10 h-11 rounded-xl border-2 bg-white focus-visible:ring-0 focus-visible:border-primary transition-colors"
                                     style={{ borderColor: 'rgba(99,2,12,0.2)', color: '#200f0f' }}
@@ -181,30 +173,12 @@ const Login = () => {
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Please wait...
                                 </>
-                            ) : isLogin ? (
-                                "Sign In"
                             ) : (
-                                "Create Admin Account"
+                                "Sign In"
                             )}
                         </Button>
                     </form>
 
-                    <div className="text-center">
-                        <button
-                            type="button"
-                            className="text-sm font-semibold transition-colors hover:opacity-70"
-                            style={{ color: '#63020c' }}
-                            onClick={() => {
-                                setIsLogin(!isLogin);
-                                setFormData({ email: "", password: "" });
-                            }}
-                            disabled={isLoading}
-                        >
-                            {isLogin
-                                ? "Need an admin account? Sign up →"
-                                : "Already have an account? Sign in →"}
-                        </button>
-                    </div>
 
                     <p className="text-center text-xs" style={{ color: '#20100f80' }}>
                         Access restricted to authorized administrators only
