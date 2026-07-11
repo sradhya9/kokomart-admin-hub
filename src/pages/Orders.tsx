@@ -29,7 +29,6 @@ interface OrderItem {
   weight?: number | string;
   unit?: string;
 }
-
 interface DeliveryPartner {
   id: string;
   name: string;
@@ -101,7 +100,7 @@ export default function Orders() {
           // Fetch user data
           let customer = "Unknown";
           let phone = "";
-          
+
           // 1. Try to get address from the order document first
           let address = data.address || "";
           if (address && typeof address === 'object') {
@@ -150,14 +149,14 @@ export default function Orders() {
                 // Try singular delivery_partner
                 const partnerDoc2 = await getDoc(doc(db, "delivery_partner", partnerId));
                 if (partnerDoc2.exists()) {
-                   const pData = partnerDoc2.data();
-                   console.log(`[DEBUG-ORDER] Partner found in delivery_partner (singular):`, pData);
-                   deliveryPartner = {
-                     id: partnerId,
-                     name: pData.name || "Unknown Partner",
-                     phone: pData.phone || "",
-                     avatar: pData.avatar || ""
-                   };
+                  const pData = partnerDoc2.data();
+                  console.log(`[DEBUG-ORDER] Partner found in delivery_partner (singular):`, pData);
+                  deliveryPartner = {
+                    id: partnerId,
+                    name: pData.name || "Unknown Partner",
+                    phone: pData.phone || "",
+                    avatar: pData.avatar || ""
+                  };
                 } else {
                   // Try 'partners'
                   const partnerDoc3 = await getDoc(doc(db, "partners", partnerId));
@@ -548,12 +547,12 @@ export default function Orders() {
                         }
                       });
                       if (!hasWeight) return null;
-                      const displayWeight = totalGrams >= 1000 
+                      const displayWeight = totalGrams >= 1000
                         ? `${(totalGrams / 1000).toFixed(2)} kg`
                         : `${totalGrams} gm`;
                       return (
                         <span className="text-xs font-semibold rounded-full px-2 py-0.5 bg-success/10 text-success">
-                           Total Weight: {displayWeight}
+                          Total Weight: {displayWeight}
                         </span>
                       );
                     })()}
@@ -612,7 +611,7 @@ export default function Orders() {
                               effectivePrice = (item.price * weight) / 1000;
                             }
                           }
-                          
+
                           return (effectivePrice * item.quantity).toLocaleString();
                         })()}
                       </p>
